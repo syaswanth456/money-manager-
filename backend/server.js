@@ -1,57 +1,25 @@
-const app = require('./app');
-const env = require('./config/env');
-const { startScheduler } = require('./services/scheduler.service');
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import http from "http";
+import authRoutes from "./routes/auth.js";
+import { initWebSocket } from "./websocket.js";
 
-// Validate environment variables
-try {
-  env.validate();
-} catch (error) {
-  console.error('❌ Environment validation failed:', error.message);
-  process.exit(1);
-}
+dotenv.config();
 
-// Start server
-const server = app.listen(env.PORT, () => {
-  console.log(`
-🚀 Money Manager API Server Started!
-   Environment: ${env.NODE_ENV}
-   Port: ${env.PORT}
-   Base URL: ${env.BASE_URL}
-   Time: ${new Date().toISOString()}
-  `);
-  
-  // Start notification scheduler in production
-  if (env.NODE_ENV === 'production') {
-    startScheduler();
-    console.log('✓ Notification scheduler started');
-  }
-});
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-// Graceful shutdown
-const shutdown = () => {
-  console.log('\n🛑 Shutting down server...');
-  server.close(() => {
-    console.log('✓ Server closed');
-    process.exit(0);
-  });
+app.use("/api/auth", authRoutes);
 
-  // Force shutdown after 10 seconds
-  setTimeout(() => {
-    console.error('⚠️ Forcing shutdown due to timeout');
-    process.exit(1);
-  }, 10000);
-};
+app.get("/", (_, res) => res.send("Money Manager API running"));
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+const server = http.createServer(app);
 
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  console.error('💥 Uncaught Exception:', error);
-  shutdown();
-});
+// WebSocket init
+initWebSocket(server);
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
-  shutdown();
+server.listen(process.env.PORT, () => {
+  console.log("🚀 Server + WebSocket running on", process.env.PORT);
 });
