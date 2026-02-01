@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Track Income - WealthFlow">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/pwa/manifest.json">
+    <link rel="icon" href="/pwa/icons/icon-192x192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/pwa/icons/icon-192x192.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <title>Income - WealthFlow</title>
+</head>
+<body>
+    <!-- App Container -->
+    <div class="app-container">
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-content">
+                <div class="spinner spinner-lg"></div>
+                <p class="mt-4">Loading your income...</p>
+            </div>
+        </div>
+
+        <!-- Sidebar Navigation (Same as Dashboard) -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Sidebar content same as expenses.html -->
+            <!-- Copy from expenses.html sidebar section -->
+        </aside>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="header-title">
+                        <h2>Income</h2>
+                        <p class="text-gray-500 text-sm">Track your earnings and cashback</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <button class="btn btn-primary btn-sm" id="add-income-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Income
+                        </button>
+                    </div>
+
+                    <!-- User Menu -->
+                    <div class="user-dropdown">
+                        <button class="user-menu-btn" id="user-menu-btn">
+                            <div class="avatar avatar-sm">
+                                <img src="" alt="Profile" id="header-avatar" class="avatar-img">
+                                <div class="avatar-fallback" id="header-initials"></div>
+                            </div>
+                        </button>
+                        <div class="user-menu" id="user-menu">
+                            <!-- User menu content -->
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Income Content -->
+            <div class="income-content">
+                <!-- Income Summary Cards -->
+                <div class="summary-cards">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Total Income</p>
+                                    <h2 class="text-2xl font-bold text-success" id="total-income">$0.00</h2>
+                                </div>
+                                <div class="card-icon bg-green-100 text-green-600">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="19" x2="12" y2="5"></line>
+                                        <polyline points="5 12 12 5 19 12"></polyline>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <span class="text-success" id="income-change">+0.0%</span>
+                                    <span class="mx-1">•</span>
+                                    <span>vs last month</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">This Month</p>
+                                    <h2 class="text-2xl font-bold text-success" id="month-income">$0.00</h2>
+                                </div>
+                                <div class="card-icon bg-blue-100 text-blue-600">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Avg. Monthly</p>
+                                    <h2 class="text-2xl font-bold text-success" id="avg-monthly">$0.00</h2>
+                                </div>
+                                <div class="card-icon bg-purple-100 text-purple-600">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500">Cashback Earned</p>
+                                    <h2 class="text-2xl font-bold text-success" id="total-cashback">$0.00</h2>
+                                </div>
+                                <div class="card-icon bg-yellow-100 text-yellow-600">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                        <path d="M16 10a2 2 0 1 1 0 4"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="text-sm text-gray-500" id="cashback-count">0 transactions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Income Types Breakdown -->
+                <div class="income-types">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Income Sources</h3>
+                            <div class="card-actions">
+                                <select id="breakdown-period" class="form-control form-control-sm">
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">Last 3 Months</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="income-chart-container">
+                                <canvas id="income-source-chart"></canvas>
+                            </div>
+                            <div class="income-sources-list mt-4" id="income-sources-list">
+                                <!-- Income sources will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters and Actions -->
+                <div class="filters-section">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <!-- Date Filter -->
+                                <div class="flex items-center space-x-4">
+                                    <div class="date-filter">
+                                        <label class="text-sm font-medium text-gray-700">Date Range</label>
+                                        <div class="flex items-center space-x-2 mt-1">
+                                            <input type="text" id="date-from" class="form-control form-control-sm date-picker" placeholder="From">
+                                            <span class="text-gray-400">to</span>
+                                            <input type="text" id="date-to" class="form-control form-control-sm date-picker" placeholder="To">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Income Type Filter -->
+                                <div class="type-filter">
+                                    <select id="income-type-select" class="form-control form-control-sm">
+                                        <option value="">All Types</option>
+                                        <option value="salary">Salary</option>
+                                        <option value="freelance">Freelance</option>
+                                        <option value="investment">Investment</option>
+                                        <option value="cashback">Cashback</option>
+                                        <option value="gift">Gift</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <!-- Quick Filters -->
+                                <div class="quick-filters">
+                                    <div class="flex flex-wrap gap-2">
+                                        <button class="btn btn-outline btn-sm active" data-filter="all">All</button>
+                                        <button class="btn btn-outline btn-sm" data-filter="salary">Salary</button>
+                                        <button class="btn btn-outline btn-sm" data-filter="cashback">Cashback</button>
+                                        <button class="btn btn-outline btn-sm" data-filter="recurring">Recurring</button>
+                                    </div>
+                                </div>
+
+                                <!-- Search -->
+                                <div class="search-filter">
+                                    <div class="relative">
+                                        <input type="text" id="income-search" class="form-control form-control-sm" placeholder="Search income...">
+                                        <svg class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Income Transactions -->
+                <div class="income-transactions">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Income Transactions</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-text btn-sm" id="export-income">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Export
+                                </button>
+                                <button class="btn btn-text btn-sm" id="refresh-income">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M23 4v6h-6"></path>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                    </svg>
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table" id="income-table">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <button class="table-sort" data-sort="date">
+                                                    Date
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                                    </svg>
+                                                </button>
+                                            </th>
+                                            <th>Description</th>
+                                            <th>Type</th>
+                                            <th>Source/Account</th>
+                                            <th>
+                                                <button class="table-sort" data-sort="amount">
+                                                    Amount
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                                    </svg>
+                                                </button>
+                                            </th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="income-tbody">
+                                        <!-- Income will be loaded here -->
+                                        <tr class="loading-row">
+                                            <td colspan="7">
+                                                <div class="text-center py-8">
+                                                    <div class="spinner spinner-sm"></div>
+                                                    <p class="text-gray-500 mt-2">Loading income...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-right font-semibold">Total:</td>
+                                            <td class="font-semibold text-success" id="table-total">$0.00</td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-500" id="table-summary">
+                                    Showing 0 income transactions
+                                </div>
+                                <div class="pagination" id="income-pagination">
+                                    <!-- Pagination will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cashback Section -->
+                <div class="cashback-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Cashback & Rewards</h3>
+                            <div class="card-actions">
+                                <button class="btn btn-text btn-sm" id="add-cashback">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    Add Cashback
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="cashback-stats">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div class="stat-card">
+                                        <div class="stat-label">This Month</div>
+                                        <div class="stat-value text-success" id="cashback-month">$0.00</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Last Month</div>
+                                        <div class="stat-value" id="cashback-last-month">$0.00</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Avg. Monthly</div>
+                                        <div class="stat-value" id="cashback-avg">$0.00</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-label">Total Earned</div>
+                                        <div class="stat-value text-success" id="cashback-total">$0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h4 class="text-lg font-semibold mb-3">Recent Cashback</h4>
+                                <div class="cashback-list" id="recent-cashback">
+                                    <!-- Recent cashback will be loaded here -->
+                                    <div class="text-center py-4 text-gray-500">
+                                        No recent cashback transactions
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Income Modal -->
+            <div class="modal" id="income-form-modal">
+                <div class="modal-dialog">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="modal-income-title">Add Income</h3>
+                        <button class="modal-close" id="close-income-modal">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="income-form">
+                            <input type="hidden" id="income-id" name="id">
+                            <input type="hidden" id="income-type" name="type" value="income">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="income-amount">Amount *</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                        <input type="number" id="income-amount" name="amount" class="form-control pl-8" 
+                                               placeholder="0.00" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="income-date">Date *</label>
+                                    <input type="text" id="income-date" name="date" class="form-control date-picker" 
+                                           placeholder="Select date" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="income-description">Description *</label>
+                                <input type="text" id="income-description" name="description" class="form-control" 
+                                       placeholder="e.g., Salary from Company, Freelance Project, etc." required>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="income-category">Category *</label>
+                                    <select id="income-category" name="category_id" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <!-- Categories will be populated -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="income-account">Account *</label>
+                                    <select id="income-account" name="account_id" class="form-control" required>
+                                        <option value="">Select Account</option>
+                                        <!-- Accounts will be populated -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="income-source-type">Income Type</label>
+                                <select id="income-source-type" name="source_type" class="form-control">
+                                    <option value="salary">Salary</option>
+                                    <option value="freelance">Freelance</option>
+                                    <option value="investment">Investment</option>
+                                    <option value="cashback">Cashback/Rewards</option>
+                                    <option value="gift">Gift</option>
+                                    <option value="refund">Refund</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Payer/Source Information -->
+                            <div class="form-group">
+                                <label for="income-payer">Payer/Source</label>
+                                <input type="text" id="income-payer" name="payer" class="form-control" 
+                                       placeholder="e.g., Company Name, Client Name, Bank Name">
+                            </div>
+
+                            <!-- Recurring Income -->
+                            <div class="form-group">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="income-recurring" name="is_recurring">
+                                    <span>Recurring Income</span>
+                                </label>
+                                <small class="text-gray-500">e.g., Salary, Monthly dividends, etc.</small>
+                            </div>
+
+                            <div class="recurring-options" id="recurring-income-options" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="recurring-income-frequency">Frequency</label>
+                                        <select id="recurring-income-frequency" name="recurring_frequency" class="form-control">
+                                            <option value="weekly">Weekly</option>
+                                            <option value="biweekly">Bi-weekly</option>
+                                            <option value="monthly" selected>Monthly</option>
+                                            <option value="quarterly">Quarterly</option>
+                                            <option value="yearly">Yearly</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="next-income-occurrence">Next Occurrence</label>
+                                        <input type="date" id="next-income-occurrence" name="next_occurrence" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tax Information -->
+                            <div class="form-group">
+                                <label class="checkbox">
+                                    <input type="checkbox" id="income-taxable" name="is_taxable" checked>
+                                    <span>Taxable Income</span>
+                                </label>
+                            </div>
+
+                            <div class="tax-options" id="tax-options">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="tax-amount">Tax Amount (if already deducted)</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                            <input type="number" id="tax-amount" name="tax_amount" class="form-control pl-8" 
+                                                   placeholder="0.00" step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="tax-rate">Tax Rate (%)</label>
+                                        <input type="number" id="tax-rate" name="tax_rate" class="form-control" 
+                                               placeholder="0.00" step="0.01" min="0" max="100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="income-notes">Notes</label>
+                                <textarea id="income-notes" name="notes" class="form-control" rows="3" 
+                                          placeholder="Any additional information about this income..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" id="cancel-income">Cancel</button>
+                        <button class="btn btn-primary" id="save-income">Save Income</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Cashback Modal -->
+            <div class="modal" id="cashback-form-modal">
+                <div class="modal-dialog">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Add Cashback</h3>
+                        <button class="modal-close" id="close-cashback-modal">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="cashback-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cashback-amount">Amount *</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                        <input type="number" id="cashback-amount" name="amount" class="form-control pl-8" 
+                                               placeholder="0.00" step="0.01" min="0.01" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="cashback-date">Date *</label>
+                                    <input type="text" id="cashback-date" name="date" class="form-control date-picker" 
+                                           placeholder="Select date" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cashback-source">Source *</label>
+                                <input type="text" id="cashback-source" name="source" class="form-control" 
+                                       placeholder="e.g., Credit Card Rewards, Rakuten, Cash App" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cashback-description">Description</label>
+                                <input type="text" id="cashback-description" name="description" class="form-control" 
+                                       placeholder="e.g., 5% cashback on Amazon purchase">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cashback-account">Account *</label>
+                                    <select id="cashback-account" name="account_id" class="form-control" required>
+                                        <option value="">Select Account</option>
+                                        <!-- Accounts will be populated -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="cashback-type">Cashback Type</label>
+                                    <select id="cashback-type" name="cashback_type" class="form-control">
+                                        <option value="credit_card">Credit Card Rewards</option>
+                                        <option value="shopping">Shopping Portal</option>
+                                        <option value="bank">Bank Offer</option>
+                                        <option value="app">Cashback App</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cashback-reference">Reference/Transaction ID</label>
+                                <input type="text" id="cashback-reference" name="reference" class="form-control" 
+                                       placeholder="Optional: Original transaction reference">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cashback-notes">Notes</label>
+                                <textarea id="cashback-notes" name="notes" class="form-control" rows="2" 
+                                          placeholder="Any additional information..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" id="cancel-cashback">Cancel</button>
+                        <button class="btn btn-primary" id="save-cashback">Add Cashback</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div class="modal" id="delete-income-modal">
+                <div class="modal-dialog">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Delete Income</h3>
+                        <button class="modal-close" id="close-delete-income">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <div class="text-red-600 mb-4">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-semibold mb-2">Delete this income?</h4>
+                            <p class="text-gray-600 mb-4">This action cannot be undone. The income will be permanently removed from your records.</p>
+                            <div class="alert alert-warning">
+                                <p class="text-sm"><strong>Note:</strong> Account balance will be adjusted accordingly.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" id="cancel-delete-income">Cancel</button>
+                        <button class="btn btn-danger" id="confirm-delete-income">Delete Income</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="main-footer">
+                <div class="container">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div class="text-sm text-gray-500">
+                            © 2024 WealthFlow. All rights reserved.
+                        </div>
+                        <div class="flex items-center space-x-4 mt-2 md:mt-0">
+                            <a href="/privacy.html" class="text-sm text-gray-500 hover:text-gray-700">Privacy Policy</a>
+                            <a href="/terms.html" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
+                            <a href="/help.html" class="text-sm text-gray-500 hover:text-gray-700">Help Center</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </main>
+
+        <!-- Floating Action Button (Mobile) -->
+        <button class="fab" id="fab">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        </button>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="/js/auth.js" defer></script>
+    <script src="/js/auth-middleware.js" defer></script>
+    <script src="/js/api.js" defer></script>
+    <script src="/js/state.js" defer></script>
+    <script src="/js/income.js" defer></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Income Page JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize date pickers
+            flatpickr('.date-picker', {
+                dateFormat: 'Y-m-d',
+                defaultDate: 'today'
+            });
+            
+            // Check if user is authenticated
+            if (window.WealthFlowAuth && WealthFlowAuth.isAuthenticated()) {
+                const user = WealthFlowAuth.getCurrentUser();
+                if (user) {
+                    updateUserDisplay(user);
+                }
+            }
+            
+            // Recurring income toggle
+            document.getElementById('income-recurring')?.addEventListener('change', function() {
+                document.getElementById('recurring-income-options').style.display = 
+                    this.checked ? 'block' : 'none';
+            });
+            
+            // Taxable income toggle
+            document.getElementById('income-taxable')?.addEventListener('change', function() {
+                document.getElementById('tax-options').style.display = 
+                    this.checked ? 'block' : 'none';
+            });
+        });
+
+        function updateUserDisplay(user) {
+            const name = user.name || user.email.split('@')[0];
+            const email = user.email;
+            
+            // Set user name and email
+            document.querySelectorAll('#user-name').forEach(el => {
+                el.textContent = name;
+            });
+            
+            document.querySelectorAll('#user-email').forEach(el => {
+                el.textContent = email;
+            });
+            
+            // Set initials for avatars
+            const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+            document.querySelectorAll('.avatar-fallback').forEach(el => {
+                el.textContent = initials;
+            });
+            
+            // Try to load user photo if available
+            if (user.photoURL) {
+                document.querySelectorAll('.avatar-img').forEach(img => {
+                    img.src = user.photoURL;
+                    img.style.display = 'block';
+                });
+                document.querySelectorAll('.avatar-fallback').forEach(fallback => {
+                    fallback.style.display = 'none';
+                });
+            }
+        }
+
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-toggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('open');
+        });
+
+        document.getElementById('sidebar-close')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('open');
+        });
+
+        document.getElementById('sidebar-overlay')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.remove('open');
+            this.classList.remove('open');
+        });
+
+        // Logout functionality
+        document.querySelectorAll('#logout-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.WealthFlowAuth) {
+                    WealthFlowAuth.signOut();
+                }
+            });
+        });
+
+        // FAB for mobile
+        document.getElementById('fab')?.addEventListener('click', function() {
+            showIncomeForm();
+        });
+
+        // Initialize the page
+        window.addEventListener('load', function() {
+            // Hide loading overlay
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 300);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
