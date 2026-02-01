@@ -1978,51 +1978,73 @@ textarea.form-control {
 }
 
 
-/* Income Page Specific Styles */
+/* ============================================
+   INCOME SPECIFIC STYLES
+   ============================================ */
 
-/* Income Content */
-.income-content {
-    padding: 1.5rem;
+/* Type badges for income */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
 }
 
-/* Summary Cards */
-.summary-cards {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+.type-badge.salary { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
+.type-badge.freelance { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.type-badge.investment { background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.type-badge.cashback { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.type-badge.gift { background-color: rgba(236, 72, 153, 0.1); color: #ec4899; }
+.type-badge.refund { background-color: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.type-badge.other { background-color: rgba(107, 114, 128, 0.1); color: #6b7280; }
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
-@media (min-width: 640px) {
-    .summary-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.status-badge.bg-green-100 { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
+.status-badge.bg-red-100 { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.status-badge.bg-blue-100 { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.status-badge.bg-yellow-100 { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+/* Card icons with different colors */
+.card-icon.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
 }
 
-@media (min-width: 1024px) {
-    .summary-cards {
-        grid-template-columns: repeat(4, 1fr);
-    }
+.card-icon.warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
 }
 
-/* Income Types Section */
-.income-types {
-    margin-bottom: 1.5rem;
+/* Cashback specific items */
+.cashback-item {
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease;
 }
 
-.income-chart-container {
-    height: 300px;
-    position: relative;
+.cashback-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
-.income-sources-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
+/* Source items in income breakdown */
 .source-item {
-    padding: 0.75rem;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .source-item:last-child {
@@ -2033,165 +2055,281 @@ textarea.form-control {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    margin-right: 0.5rem;
-}
-
-/* Income Transactions */
-.income-transactions {
-    margin-bottom: 1.5rem;
-}
-
-/* Type Badge */
-.type-badge {
+    margin-right: 8px;
     display: inline-block;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border-radius: 0.25rem;
 }
 
-/* Status Badge */
-.status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    border-radius: 0.25rem;
+/* Progress bars for income breakdown */
+.progress-bar-container {
+    width: 100px;
+    height: 6px;
+    background-color: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-left: 8px;
 }
 
-/* Cashback Section */
-.cashback-section {
-    margin-bottom: 1.5rem;
+.progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
 }
 
-.cashback-stats {
-    margin-bottom: 1.5rem;
-}
-
-.stat-card {
+/* Warning message for delete modal */
+.warning-message {
     text-align: center;
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    background-color: #f9fafb;
+    padding: 20px;
 }
 
-.stat-label {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-bottom: 0.5rem;
+.warning-message svg {
+    color: var(--danger-color);
+    margin-bottom: 16px;
 }
 
-.stat-value {
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.cashback-list {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.cashback-item {
-    padding: 0.75rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    margin-bottom: 0.5rem;
-    transition: all 0.2s ease;
-}
-
-.cashback-item:hover {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
-}
-
-/* Tax Options */
-.tax-options {
-    animation: slideInDown 0.2s ease;
-    padding: 1rem;
-    background-color: #f9fafb;
-    border-radius: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-    .income-content {
-        padding: 1rem;
-    }
-    
-    .summary-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .income-chart-container {
-        height: 250px;
-    }
-    
-    .cashback-stats .grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .summary-cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .cashback-stats .grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-
-
-/* ============================================
-   COMPONENTS.CSS - Reusable UI Components
-   ============================================ */
-
-/* Button Styles */
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: 2px solid transparent;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-    user-select: none;
-    white-space: nowrap;
-}
-
-.btn-primary {
-    background: var(--primary-color);
+/* Quick filters active state */
+.quick-filters .btn.active {
+    background-color: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
 }
 
-.btn-primary:hover {
-    background: var(--primary-dark);
-    border-color: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+/* Card change indicators */
+.card-change {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 4px;
 }
 
-.btn-success {
-    background: var(--success-color);
-    color: white;
-    border-color: var(--success-color);
+.card-change.positive {
+    color: var(--success-color);
 }
 
-.btn-success:hover {
-    background: var(--success-dark);
-    border-color: var(--success-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--success-rgb), 0.3);
+.card-change.negative {
+    color: var(--danger-color);
 }
 
-/* ... rest of the file ... */
+/* Stat trend indicators */
+.stat-trend {
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.stat-trend.positive {
+    color: var(--success-color);
+}
+
+.stat-trend.negative {
+    color: var(--danger-color);
+}
+
+/* Empty state for income */
+.empty-state-icon {
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Form specific styles for income */
+#tax-options {
+    padding: 16px;
+    background: var(--bg-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Modal sizes */
+.modal-lg {
+    max-width: 600px;
+}
+
+.modal-md {
+    max-width: 500px;
+}
+
+.modal-sm {
+    max-width: 400px;
+}
+
+/* Chart legends */
+.chart-legend {
+    margin-top: 20px;
+}
+
+/* Two column layout for analytics */
+.two-column-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+@media (max-width: 1024px) {
+    .two-column-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Stats grid for cashback */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stat-value.text-success {
+    color: var(--success-color);
+}
+
+.stat-change {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Text colors for success */
+.text-success {
+    color: var(--success-color);
+}
+
+.text-danger {
+    color: var(--danger-color);
+}
+
+/* Flex utilities */
+.flex {
+    display: flex;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.space-x-1 > * + * {
+    margin-left: 0.25rem;
+}
+
+.space-x-2 > * + * {
+    margin-left: 0.5rem;
+}
+
+.space-y-3 > * + * {
+    margin-top: 0.75rem;
+}
+
+/* Margin utilities */
+.ml-2 {
+    margin-left: 0.5rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+/* Text utilities */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-xs {
+    font-size: 0.75rem;
+}
+
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* Background colors for badges */
+.bg-green-100 {
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.text-green-800 {
+    color: #10b981;
+}
+
+.bg-yellow-100 {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.text-yellow-800 {
+    color: #f59e0b;
+}
+
+.bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.text-blue-800 {
+    color: #3b82f6;
+}
+
+.bg-red-100 {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.text-red-800 {
+    color: #ef4444;
+}
+
