@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - WealthFlow</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/pwa/manifest.json">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <!-- App Configuration -->
+    <script src="/js/config.js"></script>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner spinner-lg"></div>
+        <p class="loading-text">Loading Notifications...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h2>WealthFlow</h2>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="/dashboard.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/accounts.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                <path d="M16 10h2"></path>
+                                <path d="M6 10h2"></path>
+                                <circle cx="12" cy="10" r="1"></circle>
+                            </svg>
+                            <span>Accounts</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/expenses.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 1v22"></path>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                            <span>Expenses</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/income.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                            <span>Income</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/transfer.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M7 17l9.2-9.2M17 17v-5h-5"></path>
+                                <circle cx="12" cy="12" r="10"></circle>
+                            </svg>
+                            <span>Transfer</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-divider"></div>
+                
+                <ul>
+                    <li>
+                        <a href="/budgets.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 20V10"></path>
+                                <path d="M18 20V4"></path>
+                                <path d="M6 20v-4"></path>
+                            </svg>
+                            <span>Budgets</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/goals.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                            </svg>
+                            <span>Goals</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/notifications.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/settings.html">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <img id="user-avatar" src="" alt="User">
+                    </div>
+                    <div class="user-info">
+                        <div id="user-name" class="user-name">Loading...</div>
+                        <div id="user-email" class="user-email">Loading...</div>
+                    </div>
+                    <button class="btn btn-text btn-sm" onclick="Common.logout()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-left">
+                    <h1 class="page-title">Notifications</h1>
+                    <p class="page-subtitle">Manage your alerts and preferences</p>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button id="notification-toggle" class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="toggle-slider"></span>
+                        </button>
+                        <span class="toggle-label">Notifications</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Two Column Layout -->
+            <div class="two-column-layout">
+                <!-- Left Column: Notification List -->
+                <div class="column">
+                    <section class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">Recent Notifications</h2>
+                            <div class="section-actions">
+                                <button id="mark-all-read-page" class="btn btn-outline btn-sm">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M20 6L9 17l-5-5"></path>
+                                    </svg>
+                                    Mark All Read
+                                </button>
+                                <button id="clear-all-page" class="btn btn-text btn-sm">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                    Clear All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="notifications-container" class="notifications-container">
+                            <!-- Notifications will be loaded here -->
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                </svg>
+                                <h3>No notifications</h3>
+                                <p class="text-muted">When you have notifications, they'll appear here</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                
+                <!-- Right Column: Notification Settings -->
+                <div class="column">
+                    <section class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">Notification Settings</h2>
+                            <span class="badge badge-primary">Customize</span>
+                        </div>
+                        
+                        <div class="notification-settings">
+                            <div class="settings-group">
+                                <h3 class="settings-group-title">General Settings</h3>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <div class="setting-name">Desktop Notifications</div>
+                                        <div class="setting-description">Show notifications on your desktop</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-key="desktop" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <div class="setting-name">Notification Sound</div>
+                                        <div class="setting-description">Play sound when new notification arrives</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-key="sound" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <div class="setting-name">Push Notifications</div>
+                                        <div class="setting-description">Receive push notifications on mobile</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-key="push" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <div class="setting-name">Email Notifications</div>
+                                        <div class="setting-description">Send notifications to your email</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-key="email">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3 class="settings-group-title">Schedule</h3>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <div class="setting-name">Daily Digest Time</div>
+                                        <div class="setting-description">Time to receive daily notifications</div>
+                                    </div>
+                                    <div class="setting-control">
+                                        <div class="schedule-time">
+                                            <input type="time" id="notification-time" class="input time-input" value="09:00">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <h3 class="settings-group-title">Notification Types</h3>
+                                <div class="notification-types">
+                                    <div class="type-item">
+                                        <div class="type-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                                <path d="M16 10h2"></path>
+                                                <path d="M6 10h2"></path>
+                                                <circle cx="12" cy="10" r="1"></circle>
+                                            </svg>
+                                        </div>
+                                        <div class="type-info">
+                                            <div class="type-name">Balance Alerts</div>
+                                            <div class="type-description">Low balance warnings</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-type="type" data-setting-key="balance_alert" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="type-item">
+                                        <div class="type-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                <polyline points="10 9 9 9 8 9"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div class="type-info">
+                                            <div class="type-name">Bill Reminders</div>
+                                            <div class="type-description">Upcoming bill notifications</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-type="type" data-setting-key="bill_reminder" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="type-item">
+                                        <div class="type-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                            </svg>
+                                        </div>
+                                        <div class="type-info">
+                                            <div class="type-name">Budget Warnings</div>
+                                            <div class="type-description">Budget limit alerts</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-type="type" data-setting-key="budget_warning" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="type-item">
+                                        <div class="type-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M17 1l4 4-4 4"></path>
+                                                <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                                <path d="M7 23l-4-4 4-4"></path>
+                                                <path d="M21 13v2a4 4 0 0 0 4 4H3"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="type-info">
+                                            <div class="type-name">Transfer Updates</div>
+                                            <div class="type-description">Transfer completion alerts</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-type="type" data-setting-key="transfer_complete" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="type-item">
+                                        <div class="type-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div class="type-info">
+                                            <div class="type-name">Goal Progress</div>
+                                            <div class="type-description">Savings goal updates</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-type="type" data-setting-key="goal_progress" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="type-item">
+                                        <div class="type-icon">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="type-info">
+                                            <div class="type-name">Security Alerts</div>
+                                            <div class="type-description">Security related notifications</div>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" class="notification-setting" data-setting-type="type" data-setting-key="security_alert" checked>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <button id="save-settings" class="btn btn-primary" style="width: 100%;">
+                                    Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/state.js"></script>
+    <script src="/js/init.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/notifications.js"></script>
+    
+    <script>
+        // Initialize app
+        window.addEventListener('DOMContentLoaded', async () => {
+            await window.AppInitializer.initialize();
+            
+            // Load user info
+            const auth = window.WealthFlowAuth;
+            if (auth && auth.isAuthenticated()) {
+                const user = auth.getCurrentUser();
+                if (user) {
+                    document.getElementById('user-name').textContent = user.name || 'User';
+                    document.getElementById('user-email').textContent = user.email || '';
+                    
+                    if (user.avatar_url) {
+                        document.getElementById('user-avatar').src = user.avatar_url;
+                    }
+                }
+            }
+            
+            // Setup page specific event listeners
+            setupPageListeners();
+        });
+        
+        function setupPageListeners() {
+            // Mark all as read (page button)
+            document.getElementById('mark-all-read-page')?.addEventListener('click', () => {
+                if (window.notificationManager) {
+                    window.notificationManager.markAllAsRead();
+                }
+            });
+            
+            // Clear all (page button)
+            document.getElementById('clear-all-page')?.addEventListener('click', () => {
+                if (window.notificationManager) {
+                    window.notificationManager.clearAllNotifications();
+                }
+            });
+            
+            // Save settings button
+            document.getElementById('save-settings')?.addEventListener('click', () => {
+                if (window.notificationManager) {
+                    window.notificationManager.saveSettings();
+                    if (window.Common) {
+                        window.Common.showSuccess('Settings saved successfully');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
