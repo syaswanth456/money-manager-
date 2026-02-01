@@ -1,25 +1,36 @@
-const socket = new WebSocket("wss://YOUR_RENDER_URL");
+let socket;
 
-socket.onopen = () => {
-  console.log("🟢 WebSocket connected");
-};
+async function initSocket() {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session.access_token;
 
-socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+  socket = new WebSocket(
+    `wss://YOUR_RENDER_URL?token=${token}`
+  );
 
-  if (data.type === "BALANCE_UPDATE") {
-    updateBalanceUI(data.payload);
-  }
+  socket.onopen = () => console.log("🟢 WS connected");
 
-  if (data.type === "TRANSFER_SUCCESS") {
-    showToast("Transfer completed in real time!");
-  }
-};
+  socket.onmessage = (e) => {
+    const event = JSON.parse(e.data);
 
-socket.onclose = () => {
-  console.log("🔴 WebSocket disconnected");
-};
+    switch (event.type) {
+      case "BALANCE_UPDATE":
+        updateBalanceUI(event.payload);
+        break;
 
-function sendSocketEvent(type, payload) {
-  socket.send(JSON.stringify({ type, payload }));
+      case "TRANSFER":
+        showToast("Transfer completed");
+        break;
+
+      case "EXPENSE":
+        showToast("Expense added");
+        break;
+    }
+  };
+
+  socket.onclose = () => console.log("🔴 WS closed");
+}
+
+function sendEvent(type, payload) {
+  socket?.send(JSON.stringify({ type, payload }));
 }
