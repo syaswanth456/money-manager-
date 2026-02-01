@@ -459,3 +459,22 @@ handleKeyboardShortcuts = (event) => {
 
 // Also update the protected pages array:
 const protectedPages = ['dashboard', 'accounts', 'expenses', 'income', 'transfer', 'budgets', 'goals', 'settings'];
+
+
+
+// Add notifications to protected pages
+const protectedPages = ['dashboard', 'accounts', 'expenses', 'income', 'transfer', 'notifications', 'budgets', 'goals', 'settings'];
+
+// Add keyboard shortcut for notifications
+case 'n':
+    event.preventDefault();
+    // Toggle notification dropdown if bell exists
+    const notificationBell = document.getElementById('notification-bell');
+    if (notificationBell && window.notificationManager) {
+        window.notificationManager.toggleNotificationDropdown();
+    } else if (!window.location.pathname.includes('notifications')) {
+        window.location.href = '/notifications.html';
+    }
+    break;
+
+
