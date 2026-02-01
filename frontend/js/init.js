@@ -391,3 +391,71 @@ if (document.readyState === 'loading') {
 } else {
     appInitializer.initialize().catch(console.error);
 }
+
+[file name]: init.js
+[file content modify section]
+// In the setupEventListeners function, update the keyboard shortcuts:
+
+handleKeyboardShortcuts = (event) => {
+    // Global keyboard shortcuts
+    if (event.ctrlKey || event.metaKey) {
+        switch (event.key) {
+            case 'n':
+                event.preventDefault();
+                // Quick add - check which page we're on
+                if (window.location.pathname.includes('dashboard')) {
+                    document.getElementById('fab')?.click();
+                } else if (window.location.pathname.includes('income')) {
+                    document.getElementById('add-income-btn')?.click();
+                } else if (window.location.pathname.includes('expenses')) {
+                    document.getElementById('add-expense-btn')?.click();
+                }
+                break;
+                
+            case 's':
+                event.preventDefault();
+                // Save current form
+                const activeForm = document.querySelector('form:focus-within');
+                if (activeForm) {
+                    const submitBtn = activeForm.querySelector('button[type="submit"]');
+                    if (submitBtn) submitBtn.click();
+                }
+                break;
+                
+            case 'd':
+                event.preventDefault();
+                // Go to dashboard
+                if (!window.location.pathname.includes('dashboard')) {
+                    window.location.href = '/dashboard.html';
+                }
+                break;
+                
+            case 'e':
+                event.preventDefault();
+                // Go to expenses
+                if (!window.location.pathname.includes('expenses')) {
+                    window.location.href = '/expenses.html';
+                }
+                break;
+                
+            case 'i':
+                event.preventDefault();
+                // Go to income
+                if (!window.location.pathname.includes('income')) {
+                    window.location.href = '/income.html';
+                }
+                break;
+                
+            case 'a':
+                event.preventDefault();
+                // Go to accounts
+                if (!window.location.pathname.includes('accounts')) {
+                    window.location.href = '/accounts.html';
+                }
+                break;
+        }
+    }
+}
+
+// Also update the protected pages array:
+const protectedPages = ['dashboard', 'accounts', 'expenses', 'income', 'transfer', 'budgets', 'goals', 'settings'];
