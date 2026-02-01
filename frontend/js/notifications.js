@@ -1,18 +1,18 @@
 
 // ============================================
-// NOTIFICATIONS.JS - Notification Management
+// NOTIFICATIONS.JS - Web Notifications System
 // ============================================
 
 class NotificationManager {
     constructor() {
         this.notifications = [];
         this.unreadCount = 0;
-        this.settings = {
+        this.notificationSettings = {
             enabled: true,
             sound: true,
             desktop: true,
-            push: false,
             email: false,
+            push: true,
             scheduleTime: '09:00',
             types: {
                 balance_alert: true,
@@ -20,48 +20,47 @@ class NotificationManager {
                 budget_warning: true,
                 transfer_complete: true,
                 goal_progress: true,
-                system: true
+                security_alert: true
             }
         };
-        
-        this.audioContext = null;
-        this.notificationSound = null;
         
         this.init();
     }
 
     /**
-     * Initialize notification manager
+     * Initialize notification system
      */
-    init() {
-        console.log('🔔 Initializing Notification Manager...');
+    async init() {
+        console.log('🔔 Initializing Notification System...');
         
         // Load settings and notifications
-        this.loadSettings();
-        this.loadNotifications();
+        await this.loadSettings();
+        await this.loadNotifications();
         
         // Setup event listeners
         this.setupEventListeners();
         
         // Request notification permission
-        this.requestPermission();
+        await this.requestPermission();
         
-        // Initialize sound
-        this.initSound();
+        // Setup periodic checks
+        this.setupPeriodicChecks();
         
-        // Start periodic check
-        this.startPeriodicCheck();
+        console.log('✅ Notification System initialized');
     }
 
     /**
      * Load notification settings
      */
-    loadSettings() {
+    async loadSettings() {
         try {
-            const savedSettings = localStorage.getItem('wealthflow_notification_settings');
-            if (savedSettings) {
-                this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+            const saved = localStorage.getItem('wealthflow_notification_settings');
+            if (saved) {
+                this.notificationSettings = { ...this.notificationSettings, ...JSON.parse(saved) };
             }
+            
+            // Update UI
+            this.updateSettingsUI();
         } catch (error) {
             console.error('Failed to load notification settings:', error);
         }
@@ -72,18 +71,18 @@ class NotificationManager {
      */
     saveSettings() {
         try {
-            localStorage.setItem('wealthflow_notification_settings', JSON.stringify(this.settings));
+            localStorage.setItem('wealthflow_notification_settings', JSON.stringify(this.notificationSettings));
         } catch (error) {
             console.error('Failed to save notification settings:', error);
         }
     }
 
     /**
-     * Load notifications from API/State
+     * Load notifications
      */
     async loadNotifications() {
         try {
-            // Try to load from AppState first
+            // Try to load from AppState
             if (window.AppState) {
                 const state = window.AppState.getState();
                 this.notifications = state.notifications || [];
@@ -96,14 +95,14 @@ class NotificationManager {
                 const response = await window.WealthFlowAPI.notifications.getAll();
                 this.notifications = response.notifications || response || [];
                 this.updateUnreadCount();
-            } else {
-                // Load mock data
-                this.loadMockNotifications();
+                return;
             }
+            
+            // Load mock data
+            this.loadMockNotifications();
             
         } catch (error) {
             console.error('Failed to load notifications:', error);
-            this.loadMockNotifications();
         }
     }
 
@@ -111,102 +110,41 @@ class NotificationManager {
      * Setup event listeners
      */
     setupEventListeners() {
-        // Notification bell click
-        document.getElementById('notification-bell')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleNotificationPanel();
-        });
+        // Notification toggle
+        document.getElementById('notification-toggle')?.addEventListener('click', () => this.toggleNotifications());
         
         // Mark all as read
-        document.getElementById('mark-all-read')?.addEventListener('click', () => {
-            this.markAllAsRead();
+        document.getElementById('mark-all-read')?.addEventListener('click', () => this.markAllAsRead());
+        
+        // Notification settings
+        document.querySelectorAll('.notification-setting').forEach(setting => {
+            setting.addEventListener('change', (e) => this.updateSetting(e));
+        });
+        
+        // Schedule time
+        document.getElementById('notification-time')?.addEventListener('change', (e) => {
+            this.notificationSettings.scheduleTime = e.target.value;
+            this.saveSettings();
         });
         
         // Clear all notifications
-        document.getElementById('clear-all-notifications')?.addEventListener('click', () => {
-            this.clearAllNotifications();
+        document.getElementById('clear-notifications')?.addEventListener('click', () => this.clearAllNotifications());
+        
+        // Notification dropdown toggle
+        document.getElementById('notification-bell')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleNotificationDropdown();
         });
         
-        // Notification settings
-        document.getElementById('notification-settings')?.addEventListener('click', () => {
-            this.showSettingsModal();
-        });
-        
-        // Close notification panel when clicking outside
+        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-            const panel = document.getElementById('notification-panel');
+            const dropdown = document.getElementById('notification-dropdown');
             const bell = document.getElementById('notification-bell');
             
-            if (panel && panel.classList.contains('show') && 
-                !panel.contains(e.target) && 
-                !bell?.contains(e.target)) {
-                panel.classList.remove('show');
+            if (dropdown && bell && !dropdown.contains(e.target) && !bell.contains(e.target)) {
+                dropdown.classList.remove('show');
             }
         });
-        
-        // Listen for app events that should trigger notifications
-        this.setupAppEventListeners();
-        
-        // Listen for push notifications from service worker
-        this.setupPushListeners();
-    }
-
-    /**
-     * Setup app event listeners for automatic notifications
-     */
-    setupAppEventListeners() {
-        // Listen for transaction events
-        window.addEventListener('transaction:created', (e) => {
-            const transaction = e.detail;
-            this.createTransactionNotification(transaction);
-        });
-        
-        // Listen for balance alerts
-        window.addEventListener('account:lowBalance', (e) => {
-            const account = e.detail;
-            this.createLowBalanceNotification(account);
-        });
-        
-        // Listen for budget warnings
-        window.addEventListener('budget:warning', (e) => {
-            const budget = e.detail;
-            this.createBudgetWarningNotification(budget);
-        });
-        
-        // Listen for bill reminders
-        window.addEventListener('bill:reminder', (e) => {
-            const bill = e.detail;
-            this.createBillReminderNotification(bill);
-        });
-        
-        // Listen for goal progress
-        window.addEventListener('goal:progress', (e) => {
-            const goal = e.detail;
-            this.createGoalProgressNotification(goal);
-        });
-    }
-
-    /**
-     * Setup push notification listeners
-     */
-    setupPushListeners() {
-        // Listen for push events from service worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'PUSH_NOTIFICATION') {
-                    this.handlePushNotification(event.data.payload);
-                }
-            });
-        }
-        
-        // Listen for browser push notifications
-        if ('Notification' in window) {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    console.log('✅ Push notification permission granted');
-                }
-            });
-        }
     }
 
     /**
@@ -214,7 +152,7 @@ class NotificationManager {
      */
     async requestPermission() {
         if (!('Notification' in window)) {
-            console.log('⚠️ This browser does not support notifications');
+            console.log('This browser does not support notifications');
             return false;
         }
         
@@ -236,369 +174,75 @@ class NotificationManager {
     }
 
     /**
-     * Initialize notification sound
+     * Setup periodic checks
      */
-    initSound() {
-        if (this.settings.sound) {
-            // Create audio context for notification sounds
-            try {
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Create a simple notification sound (beep)
-                const createNotificationSound = () => {
-                    const oscillator = this.audioContext.createOscillator();
-                    const gainNode = this.audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(this.audioContext.destination);
-                    
-                    oscillator.frequency.value = 800;
-                    oscillator.type = 'sine';
-                    
-                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
-                    
-                    oscillator.start(this.audioContext.currentTime);
-                    oscillator.stop(this.audioContext.currentTime + 0.5);
-                };
-                
-                this.notificationSound = createNotificationSound;
-            } catch (error) {
-                console.error('Failed to initialize notification sound:', error);
-            }
-        }
+    setupPeriodicChecks() {
+        // Check for new notifications every minute
+        setInterval(() => {
+            this.checkForNewNotifications();
+        }, 60000);
+        
+        // Check for scheduled notifications
+        setInterval(() => {
+            this.checkScheduledNotifications();
+        }, 30000);
     }
 
     /**
-     * Start periodic notification check
+     * Check for new notifications
      */
-    startPeriodicCheck() {
-        // Check for scheduled notifications every minute
-        setInterval(() => {
-            this.checkScheduledNotifications();
-        }, 60000); // 1 minute
+    async checkForNewNotifications() {
+        if (!window.WealthFlowAPI || !window.WealthFlowAuth || !WealthFlowAuth.isAuthenticated()) {
+            return;
+        }
         
-        // Initial check
-        this.checkScheduledNotifications();
+        try {
+            const response = await window.WealthFlowAPI.notifications.getUnread();
+            const newNotifications = response.notifications || response || [];
+            
+            // Check for new notifications
+            const currentIds = new Set(this.notifications.map(n => n.id));
+            const trulyNew = newNotifications.filter(n => !currentIds.has(n.id));
+            
+            if (trulyNew.length > 0) {
+                // Add new notifications
+                this.notifications = [...trulyNew, ...this.notifications];
+                this.updateUnreadCount();
+                
+                // Show desktop notifications
+                if (this.notificationSettings.desktop && this.notificationSettings.enabled) {
+                    trulyNew.forEach(notification => {
+                        this.showDesktopNotification(notification);
+                    });
+                }
+                
+                // Update AppState
+                if (window.AppState) {
+                    window.AppState.setNotifications(this.notifications);
+                }
+                
+                // Update UI
+                this.renderNotificationList();
+            }
+            
+        } catch (error) {
+            console.error('Failed to check for new notifications:', error);
+        }
     }
 
     /**
      * Check for scheduled notifications
      */
     checkScheduledNotifications() {
-        if (!this.settings.enabled) return;
-        
         const now = new Date();
-        const currentTime = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+        const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0');
         
-        // Check if it's time for daily notifications
-        if (currentTime === this.settings.scheduleTime) {
-            this.checkDailyNotifications();
-        }
-        
-        // Check for upcoming bills (next 3 days)
-        this.checkUpcomingBills();
-        
-        // Check for budget warnings
-        this.checkBudgetWarnings();
-        
-        // Check for low balances
-        this.checkLowBalances();
-        
-        // Check for goal progress
-        this.checkGoalProgress();
-    }
-
-    /**
-     * Check for daily notifications
-     */
-    async checkDailyNotifications() {
-        try {
-            // Get daily summary
-            if (window.WealthFlowAPI) {
-                const summary = await window.WealthFlowAPI.dashboard.getSummary();
-                
-                // Create daily summary notification
-                this.createDailySummaryNotification(summary);
-            }
-        } catch (error) {
-            console.error('Failed to check daily notifications:', error);
-        }
-    }
-
-    /**
-     * Check for upcoming bills
-     */
-    async checkUpcomingBills() {
-        try {
-            if (window.WealthFlowAPI && this.settings.types.bill_reminder) {
-                const upcomingBills = await window.WealthFlowAPI.dashboard.getUpcomingBills(3); // Next 3 days
-                
-                upcomingBills.forEach(bill => {
-                    const daysUntilDue = Math.ceil((new Date(bill.due_date) - new Date()) / (1000 * 60 * 60 * 24));
-                    
-                    if (daysUntilDue <= 3 && daysUntilDue >= 0) {
-                        this.createBillReminderNotification(bill);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Failed to check upcoming bills:', error);
-        }
-    }
-
-    /**
-     * Check for budget warnings
-     */
-    async checkBudgetWarnings() {
-        try {
-            if (window.WealthFlowAPI && this.settings.types.budget_warning) {
-                const budgets = await window.WealthFlowAPI.budgets.getAll();
-                
-                budgets.forEach(budget => {
-                    // Check if budget is close to or over limit
-                    if (budget.progress && budget.progress.percentage >= 80) {
-                        this.createBudgetWarningNotification(budget);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Failed to check budget warnings:', error);
-        }
-    }
-
-    /**
-     * Check for low balances
-     */
-    async checkLowBalances() {
-        try {
-            if (window.WealthFlowAPI && this.settings.types.balance_alert) {
-                const accounts = await window.WealthFlowAPI.accounts.getAll();
-                
-                accounts.forEach(account => {
-                    const balance = parseFloat(account.balance);
-                    const lowBalanceThreshold = 100; // $100 threshold
-                    
-                    if (balance < lowBalanceThreshold && balance > 0) {
-                        this.createLowBalanceNotification(account);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Failed to check low balances:', error);
-        }
-    }
-
-    /**
-     * Check for goal progress
-     */
-    async checkGoalProgress() {
-        try {
-            if (window.WealthFlowAPI && this.settings.types.goal_progress) {
-                const goals = await window.WealthFlowAPI.goals.getAll();
-                
-                goals.forEach(goal => {
-                    const progress = goal.progress_percentage || 0;
-                    
-                    // Notify at milestones (25%, 50%, 75%, 100%)
-                    if ([25, 50, 75, 100].includes(Math.floor(progress))) {
-                        this.createGoalProgressNotification(goal);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Failed to check goal progress:', error);
-        }
-    }
-
-    /**
-     * Create a new notification
-     */
-    createNotification(notificationData) {
-        const notification = {
-            id: Date.now().toString(),
-            timestamp: new Date().toISOString(),
-            is_read: false,
-            ...notificationData
-        };
-        
-        // Add to notifications array
-        this.notifications.unshift(notification);
-        
-        // Update unread count
-        this.updateUnreadCount();
-        
-        // Save to API if available
-        this.saveNotificationToAPI(notification);
-        
-        // Show notification based on settings
-        this.showNotification(notification);
-        
-        // Update UI if notification panel is open
-        this.updateNotificationPanel();
-        
-        return notification;
-    }
-
-    /**
-     * Create transaction notification
-     */
-    createTransactionNotification(transaction) {
-        const type = transaction.type;
-        const amount = this.formatCurrency(transaction.amount);
-        const account = this.getAccountName(transaction.account_id);
-        
-        let title, message, icon;
-        
-        switch (type) {
-            case 'expense':
-                title = 'Expense Recorded';
-                message = `You spent ${amount} on ${transaction.description}`;
-                icon = 'expense';
-                break;
-            case 'income':
-                title = 'Income Received';
-                message = `You received ${amount} from ${transaction.description}`;
-                icon = 'income';
-                break;
-            case 'transfer':
-                const toAccount = this.getAccountName(transaction.to_account_id);
-                title = 'Transfer Completed';
-                message = `Transferred ${amount} from ${account} to ${toAccount}`;
-                icon = 'transfer';
-                break;
-            default:
-                return;
-        }
-        
-        return this.createNotification({
-            title,
-            message,
-            type: 'transaction',
-            icon,
-            data: { transactionId: transaction.id },
-            priority: 'medium'
-        });
-    }
-
-    /**
-     * Create low balance notification
-     */
-    createLowBalanceNotification(account) {
-        const balance = this.formatCurrency(account.balance);
-        
-        return this.createNotification({
-            title: 'Low Balance Alert',
-            message: `${account.name} has a low balance of ${balance}`,
-            type: 'balance_alert',
-            icon: 'warning',
-            data: { accountId: account.id },
-            priority: 'high'
-        });
-    }
-
-    /**
-     * Create budget warning notification
-     */
-    createBudgetWarningNotification(budget) {
-        const progress = budget.progress?.percentage || 0;
-        
-        return this.createNotification({
-            title: 'Budget Warning',
-            message: `${budget.name} is ${progress.toFixed(0)}% used`,
-            type: 'budget_warning',
-            icon: 'budget',
-            data: { budgetId: budget.id },
-            priority: 'medium'
-        });
-    }
-
-    /**
-     * Create bill reminder notification
-     */
-    createBillReminderNotification(bill) {
-        const dueDate = new Date(bill.due_date).toLocaleDateString();
-        const amount = this.formatCurrency(bill.amount);
-        
-        return this.createNotification({
-            title: 'Bill Reminder',
-            message: `${bill.name} of ${amount} is due on ${dueDate}`,
-            type: 'bill_reminder',
-            icon: 'bill',
-            data: { billId: bill.id },
-            priority: 'high'
-        });
-    }
-
-    /**
-     * Create goal progress notification
-     */
-    createGoalProgressNotification(goal) {
-        const progress = goal.progress_percentage || 0;
-        
-        return this.createNotification({
-            title: 'Goal Progress',
-            message: `${goal.name} is ${progress.toFixed(0)}% complete`,
-            type: 'goal_progress',
-            icon: 'goal',
-            data: { goalId: goal.id },
-            priority: 'low'
-        });
-    }
-
-    /**
-     * Create daily summary notification
-     */
-    createDailySummaryNotification(summary) {
-        const totalExpenses = this.formatCurrency(summary.total_expenses || 0);
-        const totalIncome = this.formatCurrency(summary.total_income || 0);
-        
-        return this.createNotification({
-            title: 'Daily Financial Summary',
-            message: `Today: Income ${totalIncome}, Expenses ${totalExpenses}`,
-            type: 'system',
-            icon: 'summary',
-            priority: 'low'
-        });
-    }
-
-    /**
-     * Save notification to API
-     */
-    async saveNotificationToAPI(notification) {
-        try {
-            if (window.WealthFlowAPI) {
-                await window.WealthFlowAPI.notifications.create(notification);
-            }
-        } catch (error) {
-            console.error('Failed to save notification to API:', error);
-        }
-    }
-
-    /**
-     * Show notification based on settings
-     */
-    showNotification(notification) {
-        // Play sound if enabled
-        if (this.settings.sound && this.notificationSound) {
-            try {
-                this.notificationSound();
-            } catch (error) {
-                console.error('Failed to play notification sound:', error);
-            }
-        }
-        
-        // Show desktop notification if enabled
-        if (this.settings.desktop && Notification.permission === 'granted') {
-            this.showDesktopNotification(notification);
-        }
-        
-        // Show in-app notification
-        this.showInAppNotification(notification);
-        
-        // Send push notification if enabled
-        if (this.settings.push && 'serviceWorker' in navigator) {
-            this.sendPushNotification(notification);
+        // Check if it's time for scheduled notifications
+        if (currentTime === this.notificationSettings.scheduleTime) {
+            this.checkForBillsDue();
+            this.checkBudgetWarnings();
+            this.checkGoalProgress();
         }
     }
 
@@ -606,354 +250,197 @@ class NotificationManager {
      * Show desktop notification
      */
     showDesktopNotification(notification) {
-        const options = {
-            body: notification.message,
-            icon: this.getNotificationIcon(notification.icon),
-            badge: '/pwa/icons/badge-72x72.png',
-            tag: notification.id,
-            requireInteraction: notification.priority === 'high',
-            actions: [
-                {
-                    action: 'view',
-                    title: 'View'
-                },
-                {
-                    action: 'dismiss',
-                    title: 'Dismiss'
-                }
-            ],
-            data: notification.data
-        };
-        
-        const desktopNotification = new Notification(notification.title, options);
-        
-        // Handle notification click
-        desktopNotification.onclick = (event) => {
-            event.preventDefault();
-            this.handleNotificationClick(notification);
-            desktopNotification.close();
-        };
-        
-        // Handle action buttons
-        desktopNotification.onclose = () => {
-            // Notification was dismissed
-        };
-        
-        // Auto-close after 10 seconds for low priority, 30 for medium, never for high
-        if (notification.priority !== 'high') {
-            setTimeout(() => {
-                desktopNotification.close();
-            }, notification.priority === 'low' ? 10000 : 30000);
-        }
-    }
-
-    /**
-     * Show in-app notification toast
-     */
-    showInAppNotification(notification) {
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `notification-toast ${notification.type}`;
-        toast.dataset.notificationId = notification.id;
-        
-        const icon = this.getNotificationIcon(notification.icon);
-        
-        toast.innerHTML = `
-            <div class="toast-icon">${icon}</div>
-            <div class="toast-content">
-                <div class="toast-title">${this.escapeHtml(notification.title)}</div>
-                <div class="toast-message">${this.escapeHtml(notification.message)}</div>
-                <div class="toast-time">Just now</div>
-            </div>
-            <button class="toast-close" onclick="window.notificationManager.dismissToast('${notification.id}')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        `;
-        
-        // Add to toast container
-        const container = document.getElementById('notification-toasts');
-        if (container) {
-            container.appendChild(toast);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                this.dismissToast(notification.id);
-            }, 5000);
-            
-            // Handle click
-            toast.addEventListener('click', (e) => {
-                if (!e.target.closest('.toast-close')) {
-                    this.handleNotificationClick(notification);
-                    this.dismissToast(notification.id);
-                }
-            });
-        }
-    }
-
-    /**
-     * Dismiss toast
-     */
-    dismissToast(notificationId) {
-        const toast = document.querySelector(`.notification-toast[data-notification-id="${notificationId}"]`);
-        if (toast) {
-            toast.style.transform = 'translateX(100%)';
-            toast.style.opacity = '0';
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }
-    }
-
-    /**
-     * Send push notification via service worker
-     */
-    sendPushNotification(notification) {
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-                type: 'SEND_PUSH_NOTIFICATION',
-                notification: {
-                    title: notification.title,
-                    body: notification.message,
-                    icon: this.getNotificationIcon(notification.icon),
-                    data: notification.data,
-                    tag: notification.id
-                }
-            });
-        }
-    }
-
-    /**
-     * Handle push notification from service worker
-     */
-    handlePushNotification(payload) {
-        // Create notification from push data
-        this.createNotification({
-            title: payload.title,
-            message: payload.body,
-            type: 'push',
-            icon: 'system',
-            data: payload.data,
-            priority: 'medium'
-        });
-    }
-
-    /**
-     * Handle notification click
-     */
-    handleNotificationClick(notification) {
-        // Mark as read
-        this.markAsRead(notification.id);
-        
-        // Navigate based on notification type
-        switch (notification.type) {
-            case 'transaction':
-                if (notification.data?.transactionId) {
-                    // Navigate to transaction details
-                    this.navigateToTransaction(notification.data.transactionId);
-                }
-                break;
-                
-            case 'balance_alert':
-                if (notification.data?.accountId) {
-                    // Navigate to accounts page
-                    window.location.href = '/accounts.html';
-                }
-                break;
-                
-            case 'budget_warning':
-                if (notification.data?.budgetId) {
-                    // Navigate to budgets page
-                    window.location.href = '/budgets.html';
-                }
-                break;
-                
-            case 'bill_reminder':
-                if (notification.data?.billId) {
-                    // Navigate to expenses page
-                    window.location.href = '/expenses.html';
-                }
-                break;
-                
-            case 'goal_progress':
-                if (notification.data?.goalId) {
-                    // Navigate to goals page
-                    window.location.href = '/goals.html';
-                }
-                break;
-        }
-        
-        // Close notification panel if open
-        this.hideNotificationPanel();
-    }
-
-    /**
-     * Navigate to transaction
-     */
-    navigateToTransaction(transactionId) {
-        // Find transaction type and navigate accordingly
-        if (window.AppState) {
-            const state = window.AppState.getState();
-            const transaction = state.transactions?.find(t => t.id === transactionId);
-            
-            if (transaction) {
-                switch (transaction.type) {
-                    case 'expense':
-                        window.location.href = '/expenses.html';
-                        break;
-                    case 'income':
-                        window.location.href = '/income.html';
-                        break;
-                    case 'transfer':
-                        window.location.href = '/transfer.html';
-                        break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Toggle notification panel
-     */
-    toggleNotificationPanel() {
-        const panel = document.getElementById('notification-panel');
-        if (!panel) return;
-        
-        if (panel.classList.contains('show')) {
-            this.hideNotificationPanel();
-        } else {
-            this.showNotificationPanel();
-        }
-    }
-
-    /**
-     * Show notification panel
-     */
-    showNotificationPanel() {
-        const panel = document.getElementById('notification-panel');
-        if (!panel) return;
-        
-        panel.classList.add('show');
-        this.updateNotificationPanel();
-        
-        // Mark all as read when panel is opened
-        this.markAllAsRead();
-    }
-
-    /**
-     * Hide notification panel
-     */
-    hideNotificationPanel() {
-        const panel = document.getElementById('notification-panel');
-        if (panel) {
-            panel.classList.remove('show');
-        }
-    }
-
-    /**
-     * Update notification panel content
-     */
-    updateNotificationPanel() {
-        const container = document.getElementById('notification-list');
-        const emptyState = document.getElementById('no-notifications');
-        const unreadBadge = document.getElementById('notification-badge');
-        
-        if (!container) return;
-        
-        if (this.notifications.length === 0) {
-            container.innerHTML = '';
-            if (emptyState) emptyState.style.display = 'block';
-            if (unreadBadge) unreadBadge.style.display = 'none';
+        if (!this.notificationSettings.desktop || !this.notificationSettings.enabled) {
             return;
         }
         
-        if (emptyState) emptyState.style.display = 'none';
-        
-        // Show unread badge if there are unread notifications
-        if (unreadBadge) {
-            unreadBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
-            unreadBadge.style.display = this.unreadCount > 0 ? 'flex' : 'none';
+        if (Notification.permission !== 'granted') {
+            return;
         }
         
-        // Render notifications
-        let html = '';
+        const options = {
+            body: notification.message,
+            icon: '/pwa/icons/icon-192x192.png',
+            badge: '/pwa/icons/badge-72x72.png',
+            tag: notification.id,
+            requireInteraction: notification.important || false,
+            data: {
+                url: notification.url || '/dashboard.html',
+                notificationId: notification.id
+            },
+            actions: []
+        };
         
-        this.notifications.slice(0, 10).forEach(notification => {
-            const timeAgo = this.getTimeAgo(notification.timestamp);
-            const icon = this.getNotificationIcon(notification.icon);
-            const readClass = notification.is_read ? 'read' : 'unread';
+        if (notification.type === 'transfer_complete') {
+            options.actions.push({
+                action: 'view',
+                title: 'View Transfer'
+            });
+        } else if (notification.type === 'bill_reminder') {
+            options.actions.push({
+                action: 'pay',
+                title: 'Pay Now'
+            });
+        }
+        
+        const notificationObj = new Notification(notification.title || 'WealthFlow', options);
+        
+        // Handle notification click
+        notificationObj.onclick = (event) => {
+            event.preventDefault();
+            window.focus();
             
-            html += `
-                <div class="notification-item ${readClass}" data-notification-id="${notification.id}">
-                    <div class="notification-icon">${icon}</div>
-                    <div class="notification-content">
-                        <div class="notification-title">${this.escapeHtml(notification.title)}</div>
-                        <div class="notification-message">${this.escapeHtml(notification.message)}</div>
-                        <div class="notification-time">${timeAgo}</div>
-                    </div>
-                    <button class="notification-dismiss" title="Dismiss">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-            `;
-        });
+            if (notification.url) {
+                window.location.href = notification.url;
+            }
+            
+            // Mark as read
+            if (notification.id) {
+                this.markAsRead(notification.id);
+            }
+            
+            notificationObj.close();
+        };
         
-        container.innerHTML = html;
+        // Handle action buttons
+        notificationObj.onaction = (event) => {
+            switch (event.action) {
+                case 'view':
+                    window.location.href = '/transfer.html';
+                    break;
+                case 'pay':
+                    window.location.href = '/expenses.html';
+                    break;
+            }
+        };
         
-        // Add event listeners
-        this.attachNotificationItemListeners();
+        // Auto-close after 10 seconds unless it requires interaction
+        if (!options.requireInteraction) {
+            setTimeout(() => {
+                notificationObj.close();
+            }, 10000);
+        }
+        
+        // Play sound if enabled
+        if (this.notificationSettings.sound) {
+            this.playNotificationSound();
+        }
     }
 
     /**
-     * Attach event listeners to notification items
+     * Play notification sound
      */
-    attachNotificationItemListeners() {
-        // Notification item click
-        document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                if (!e.target.closest('.notification-dismiss')) {
-                    const notificationId = item.dataset.notificationId;
-                    const notification = this.notifications.find(n => n.id === notificationId);
-                    if (notification) {
-                        this.handleNotificationClick(notification);
-                    }
+    playNotificationSound() {
+        try {
+            const audio = new Audio('/sounds/notification.mp3');
+            audio.volume = 0.3;
+            audio.play().catch(() => {
+                // Fallback to beep if custom sound fails
+                console.log('\u0007'); // ASCII bell character
+            });
+        } catch (error) {
+            console.log('\u0007'); // ASCII bell character as fallback
+        }
+    }
+
+    /**
+     * Create a notification
+     */
+    async createNotification(notificationData) {
+        try {
+            // Check if notification type is enabled
+            if (!this.isNotificationTypeEnabled(notificationData.type)) {
+                return;
+            }
+            
+            // Add timestamp
+            notificationData.timestamp = new Date().toISOString();
+            notificationData.is_read = false;
+            notificationData.id = `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Add to notifications array
+            this.notifications.unshift(notificationData);
+            
+            // Update unread count
+            this.updateUnreadCount();
+            
+            // Show desktop notification if enabled
+            if (this.notificationSettings.desktop && this.notificationSettings.enabled) {
+                this.showDesktopNotification(notificationData);
+            }
+            
+            // Save to API if available
+            if (window.WealthFlowAPI) {
+                try {
+                    await window.WealthFlowAPI.notifications.create(notificationData);
+                } catch (error) {
+                    console.error('Failed to save notification to API:', error);
                 }
-            });
-        });
+            }
+            
+            // Update AppState
+            if (window.AppState) {
+                window.AppState.setNotifications(this.notifications);
+            }
+            
+            // Update UI
+            this.updateNotificationBadge();
+            this.renderNotificationList();
+            
+            return notificationData;
+            
+        } catch (error) {
+            console.error('Failed to create notification:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check if notification type is enabled
+     */
+    isNotificationTypeEnabled(type) {
+        if (!this.notificationSettings.enabled) return false;
         
-        // Dismiss button click
-        document.querySelectorAll('.notification-dismiss').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const notificationId = btn.closest('.notification-item').dataset.notificationId;
-                this.dismissNotification(notificationId);
-            });
-        });
+        // Check specific type settings
+        if (this.notificationSettings.types && this.notificationSettings.types[type] !== undefined) {
+            return this.notificationSettings.types[type];
+        }
+        
+        return true; // Default to enabled if type not specified
     }
 
     /**
      * Mark notification as read
      */
     async markAsRead(notificationId) {
-        const notification = this.notifications.find(n => n.id === notificationId);
-        if (notification && !notification.is_read) {
-            notification.is_read = true;
-            this.updateUnreadCount();
-            this.updateNotificationPanel();
-            
-            // Update in API
-            try {
-                if (window.WealthFlowAPI) {
-                    await window.WealthFlowAPI.notifications.markAsRead(notificationId);
+        try {
+            // Update local state
+            this.notifications = this.notifications.map(notification => {
+                if (notification.id === notificationId) {
+                    return { ...notification, is_read: true };
                 }
-            } catch (error) {
-                console.error('Failed to mark notification as read in API:', error);
+                return notification;
+            });
+            
+            // Update unread count
+            this.updateUnreadCount();
+            
+            // Update API if available
+            if (window.WealthFlowAPI) {
+                await window.WealthFlowAPI.notifications.markAsRead(notificationId);
             }
+            
+            // Update AppState
+            if (window.AppState) {
+                window.AppState.setNotifications(this.notifications);
+            }
+            
+            // Update UI
+            this.updateNotificationBadge();
+            this.renderNotificationList();
+            
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
         }
     }
 
@@ -961,38 +448,65 @@ class NotificationManager {
      * Mark all notifications as read
      */
     async markAllAsRead() {
-        this.notifications.forEach(notification => {
-            notification.is_read = true;
-        });
-        
-        this.updateUnreadCount();
-        this.updateNotificationPanel();
-        
-        // Update in API
         try {
+            // Update local state
+            this.notifications = this.notifications.map(notification => ({
+                ...notification,
+                is_read: true
+            }));
+            
+            // Update unread count
+            this.updateUnreadCount();
+            
+            // Update API if available
             if (window.WealthFlowAPI) {
                 await window.WealthFlowAPI.notifications.markAllAsRead();
             }
+            
+            // Update AppState
+            if (window.AppState) {
+                window.AppState.setNotifications(this.notifications);
+            }
+            
+            // Update UI
+            this.updateNotificationBadge();
+            this.renderNotificationList();
+            
+            this.showSuccess('All notifications marked as read');
+            
         } catch (error) {
-            console.error('Failed to mark all notifications as read in API:', error);
+            console.error('Failed to mark all notifications as read:', error);
+            this.showError('Failed to mark all as read');
         }
     }
 
     /**
-     * Dismiss notification
+     * Delete notification
      */
-    async dismissNotification(notificationId) {
-        this.notifications = this.notifications.filter(n => n.id !== notificationId);
-        this.updateUnreadCount();
-        this.updateNotificationPanel();
-        
-        // Delete from API
+    async deleteNotification(notificationId) {
         try {
+            // Remove from local state
+            this.notifications = this.notifications.filter(n => n.id !== notificationId);
+            
+            // Update unread count
+            this.updateUnreadCount();
+            
+            // Update API if available
             if (window.WealthFlowAPI) {
                 await window.WealthFlowAPI.notifications.delete(notificationId);
             }
+            
+            // Update AppState
+            if (window.AppState) {
+                window.AppState.setNotifications(this.notifications);
+            }
+            
+            // Update UI
+            this.updateNotificationBadge();
+            this.renderNotificationList();
+            
         } catch (error) {
-            console.error('Failed to delete notification from API:', error);
+            console.error('Failed to delete notification:', error);
         }
     }
 
@@ -1000,18 +514,34 @@ class NotificationManager {
      * Clear all notifications
      */
     async clearAllNotifications() {
-        this.notifications = [];
-        this.updateUnreadCount();
-        this.updateNotificationPanel();
+        if (!confirm('Are you sure you want to clear all notifications?')) {
+            return;
+        }
         
-        // Clear from API
         try {
+            // Clear local state
+            this.notifications = [];
+            this.unreadCount = 0;
+            
+            // Update API if available
             if (window.WealthFlowAPI) {
-                // Note: API might not have bulk delete, so we'd need to delete one by one
-                // For now, just clear locally
+                // Would need a clear all endpoint
             }
+            
+            // Update AppState
+            if (window.AppState) {
+                window.AppState.setNotifications([]);
+            }
+            
+            // Update UI
+            this.updateNotificationBadge();
+            this.renderNotificationList();
+            
+            this.showSuccess('All notifications cleared');
+            
         } catch (error) {
-            console.error('Failed to clear notifications from API:', error);
+            console.error('Failed to clear all notifications:', error);
+            this.showError('Failed to clear notifications');
         }
     }
 
@@ -1020,305 +550,216 @@ class NotificationManager {
      */
     updateUnreadCount() {
         this.unreadCount = this.notifications.filter(n => !n.is_read).length;
-        
-        // Update badge in header if exists
+        this.updateNotificationBadge();
+    }
+
+    /**
+     * Update notification badge
+     */
+    updateNotificationBadge() {
         const badge = document.getElementById('notification-badge');
         if (badge) {
-            badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
-            badge.style.display = this.unreadCount > 0 ? 'flex' : 'none';
-        }
-        
-        // Update document title if there are unread notifications
-        if (this.unreadCount > 0 && !document.hidden) {
-            document.title = `(${this.unreadCount}) WealthFlow`;
-        } else {
-            document.title = 'WealthFlow';
+            if (this.unreadCount > 0) {
+                badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount.toString();
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
         }
     }
 
     /**
-     * Show settings modal
+     * Toggle notification dropdown
      */
-    showSettingsModal() {
-        // Create or show settings modal
-        const modal = document.getElementById('notification-settings-modal');
-        if (modal) {
-            modal.classList.add('show');
-            this.populateSettingsForm();
-        } else {
-            this.createSettingsModal();
+    toggleNotificationDropdown() {
+        const dropdown = document.getElementById('notification-dropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('show');
+            
+            // Mark all as read when opening dropdown
+            if (dropdown.classList.contains('show') && this.unreadCount > 0) {
+                setTimeout(() => {
+                    this.markAllAsRead();
+                }, 3000); // Mark as read after 3 seconds of viewing
+            }
+            
+            // Render notification list if not already rendered
+            if (dropdown.classList.contains('show')) {
+                this.renderNotificationList();
+            }
         }
     }
 
     /**
-     * Create settings modal
+     * Toggle notifications on/off
      */
-    createSettingsModal() {
-        const modal = document.createElement('div');
-        modal.id = 'notification-settings-modal';
-        modal.className = 'modal';
+    toggleNotifications() {
+        this.notificationSettings.enabled = !this.notificationSettings.enabled;
+        this.saveSettings();
+        this.updateSettingsUI();
         
-        modal.innerHTML = `
-            <div class="modal-content modal-md">
-                <div class="modal-header">
-                    <h3>Notification Settings</h3>
-                    <button class="btn btn-text close-modal">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="modal-body">
-                    <form id="notification-settings-form">
-                        <div class="form-group">
-                            <label class="checkbox">
-                                <input type="checkbox" id="notifications-enabled" name="enabled">
-                                <span>Enable Notifications</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="checkbox">
-                                <input type="checkbox" id="notification-sound" name="sound">
-                                <span>Play Sound</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="checkbox">
-                                <input type="checkbox" id="notification-desktop" name="desktop">
-                                <span>Show Desktop Notifications</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="checkbox">
-                                <input type="checkbox" id="notification-push" name="push">
-                                <span>Enable Push Notifications</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="notification-time">Daily Summary Time</label>
-                            <input type="time" id="notification-time" name="scheduleTime" class="input">
-                        </div>
-                        
-                        <div class="form-divider">
-                            <h4>Notification Types</h4>
-                        </div>
-                        
-                        <div class="notification-types">
-                            <div class="form-group">
-                                <label class="checkbox">
-                                    <input type="checkbox" id="type-balance" name="balance_alert">
-                                    <span>Balance Alerts</span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="checkbox">
-                                    <input type="checkbox" id="type-bills" name="bill_reminder">
-                                    <span>Bill Reminders</span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="checkbox">
-                                    <input type="checkbox" id="type-budgets" name="budget_warning">
-                                    <span>Budget Warnings</span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="checkbox">
-                                    <input type="checkbox" id="type-transfers" name="transfer_complete">
-                                    <span>Transfer Notifications</span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="checkbox">
-                                    <input type="checkbox" id="type-goals" name="goal_progress">
-                                    <span>Goal Progress</span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="checkbox">
-                                    <input type="checkbox" id="type-system" name="system">
-                                    <span>System Updates</span>
-                                </label>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn btn-text cancel-settings">Cancel</button>
-                    <button class="btn btn-primary save-settings">Save Settings</button>
-                </div>
-            </div>
-        `;
+        const status = this.notificationSettings.enabled ? 'enabled' : 'disabled';
+        this.showSuccess(`Notifications ${status}`);
+    }
+
+    /**
+     * Update setting from UI
+     */
+    updateSetting(event) {
+        const setting = event.target;
+        const settingType = setting.dataset.settingType;
+        const settingKey = setting.dataset.settingKey;
         
-        document.body.appendChild(modal);
+        if (settingType === 'type') {
+            this.notificationSettings.types[settingKey] = setting.checked;
+        } else if (settingKey) {
+            this.notificationSettings[settingKey] = setting.checked;
+        }
         
-        // Add event listeners
-        modal.querySelector('.close-modal').addEventListener('click', () => {
-            modal.classList.remove('show');
-        });
+        this.saveSettings();
+    }
+
+    /**
+     * Update settings UI
+     */
+    updateSettingsUI() {
+        // Update main toggle
+        const toggle = document.getElementById('notification-toggle');
+        if (toggle) {
+            toggle.checked = this.notificationSettings.enabled;
+            toggle.parentElement.classList.toggle('active', this.notificationSettings.enabled);
+        }
         
-        modal.querySelector('.cancel-settings').addEventListener('click', () => {
-            modal.classList.remove('show');
-        });
-        
-        modal.querySelector('.save-settings').addEventListener('click', () => {
-            this.saveNotificationSettings();
-            modal.classList.remove('show');
-        });
-        
-        // Close on backdrop click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('show');
+        // Update individual settings
+        Object.keys(this.notificationSettings).forEach(key => {
+            if (key !== 'types' && key !== 'scheduleTime') {
+                const element = document.querySelector(`[data-setting-key="${key}"]`);
+                if (element) {
+                    element.checked = this.notificationSettings[key];
+                }
             }
         });
         
-        // Populate form
-        this.populateSettingsForm();
-        modal.classList.add('show');
-    }
-
-    /**
-     * Populate settings form
-     */
-    populateSettingsForm() {
-        const form = document.getElementById('notification-settings-form');
-        if (!form) return;
-        
-        // General settings
-        form.enabled.checked = this.settings.enabled;
-        form.sound.checked = this.settings.sound;
-        form.desktop.checked = this.settings.desktop;
-        form.push.checked = this.settings.push;
-        form.scheduleTime.value = this.settings.scheduleTime;
-        
-        // Notification types
-        form.balance_alert.checked = this.settings.types.balance_alert;
-        form.bill_reminder.checked = this.settings.types.bill_reminder;
-        form.budget_warning.checked = this.settings.types.budget_warning;
-        form.transfer_complete.checked = this.settings.types.transfer_complete;
-        form.goal_progress.checked = this.settings.types.goal_progress;
-        form.system.checked = this.settings.types.system;
-    }
-
-    /**
-     * Save notification settings
-     */
-    saveNotificationSettings() {
-        const form = document.getElementById('notification-settings-form');
-        if (!form) return;
-        
-        // Update settings
-        this.settings.enabled = form.enabled.checked;
-        this.settings.sound = form.sound.checked;
-        this.settings.desktop = form.desktop.checked;
-        this.settings.push = form.push.checked;
-        this.settings.scheduleTime = form.scheduleTime.value;
-        
-        // Update notification types
-        this.settings.types.balance_alert = form.balance_alert.checked;
-        this.settings.types.bill_reminder = form.bill_reminder.checked;
-        this.settings.types.budget_warning = form.budget_warning.checked;
-        this.settings.types.transfer_complete = form.transfer_complete.checked;
-        this.settings.types.goal_progress = form.goal_progress.checked;
-        this.settings.types.system = form.system.checked;
-        
-        // Save to localStorage
-        this.saveSettings();
-        
-        // Reinitialize sound if needed
-        if (this.settings.sound && !this.notificationSound) {
-            this.initSound();
+        // Update type settings
+        if (this.notificationSettings.types) {
+            Object.keys(this.notificationSettings.types).forEach(key => {
+                const element = document.querySelector(`[data-setting-type="type"][data-setting-key="${key}"]`);
+                if (element) {
+                    element.checked = this.notificationSettings.types[key];
+                }
+            });
         }
         
-        // Request push permission if enabled
-        if (this.settings.push) {
-            this.requestPermission();
+        // Update schedule time
+        const timeInput = document.getElementById('notification-time');
+        if (timeInput) {
+            timeInput.value = this.notificationSettings.scheduleTime;
         }
-        
-        this.showSuccess('Notification settings saved');
     }
 
     /**
-     * Get notification icon
+     * Render notification list
      */
-    getNotificationIcon(iconType) {
-        const icons = {
-            expense: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M12 1v22"></path>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
-            `,
-            income: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="12" y1="19" x2="12" y2="5"></line>
-                    <polyline points="5 12 12 5 19 12"></polyline>
-                </svg>
-            `,
-            transfer: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M7 17l9.2-9.2M17 17v-5h-5"></path>
-                    <circle cx="12" cy="12" r="10"></circle>
-                </svg>
-            `,
-            warning: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            `,
-            budget: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M12 20V10"></path>
-                    <path d="M18 20V4"></path>
-                    <path d="M6 20v-4"></path>
-                </svg>
-            `,
-            bill: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-            `,
-            goal: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-                </svg>
-            `,
-            summary: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-            `,
-            system: `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-            `
-        };
+    renderNotificationList() {
+        const container = document.getElementById('notification-list');
+        const emptyState = document.getElementById('notification-empty');
         
-        return icons[iconType] || icons.system;
+        if (!container) return;
+        
+        if (this.notifications.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            container.innerHTML = '';
+            return;
+        }
+        
+        if (emptyState) emptyState.style.display = 'none';
+        
+        // Show only recent notifications (last 10)
+        const recentNotifications = this.notifications.slice(0, 10);
+        
+        let html = '';
+        
+        recentNotifications.forEach(notification => {
+            const timeAgo = this.getTimeAgo(notification.timestamp);
+            const icon = this.getNotificationIcon(notification.type);
+            const priorityClass = notification.important ? 'priority' : '';
+            const readClass = notification.is_read ? 'read' : '';
+            
+            html += `
+                <div class="notification-item ${priorityClass} ${readClass}" data-notification-id="${notification.id}">
+                    <div class="notification-icon">${icon}</div>
+                    <div class="notification-content">
+                        <div class="notification-title">${this.escapeHtml(notification.title || 'Notification')}</div>
+                        <div class="notification-message">${this.escapeHtml(notification.message)}</div>
+                        <div class="notification-time">${timeAgo}</div>
+                    </div>
+                    <div class="notification-actions">
+                        ${!notification.is_read ? `
+                            <button class="btn btn-text btn-sm mark-read" title="Mark as read">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M20 6L9 17l-5-5"></path>
+                                </svg>
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-text btn-sm delete-notification" title="Delete">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M3 6h18"></path>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        // Add event listeners
+        this.attachNotificationListeners();
+    }
+
+    /**
+     * Attach notification event listeners
+     */
+    attachNotificationListeners() {
+        // Mark as read buttons
+        document.querySelectorAll('.mark-read').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const notificationId = e.currentTarget.closest('.notification-item').dataset.notificationId;
+                this.markAsRead(notificationId);
+            });
+        });
+        
+        // Delete buttons
+        document.querySelectorAll('.delete-notification').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const notificationId = e.currentTarget.closest('.notification-item').dataset.notificationId;
+                this.deleteNotification(notificationId);
+            });
+        });
+        
+        // Notification item clicks
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (!e.target.closest('.notification-actions')) {
+                    const notificationId = item.dataset.notificationId;
+                    const notification = this.notifications.find(n => n.id === notificationId);
+                    
+                    // Mark as read
+                    if (notification && !notification.is_read) {
+                        this.markAsRead(notificationId);
+                    }
+                    
+                    // Navigate if URL exists
+                    if (notification && notification.url) {
+                        window.location.href = notification.url;
+                    }
+                }
+            });
+        });
     }
 
     /**
@@ -1328,18 +769,271 @@ class NotificationManager {
         const now = new Date();
         const past = new Date(timestamp);
         const diffMs = now - past;
-        const diffSec = Math.floor(diffMs / 1000);
-        const diffMin = Math.floor(diffSec / 60);
-        const diffHour = Math.floor(diffMin / 60);
-        const diffDay = Math.floor(diffHour / 24);
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
         
-        if (diffSec < 60) return 'Just now';
-        if (diffMin < 60) return `${diffMin}m ago`;
-        if (diffHour < 24) return `${diffHour}h ago`;
-        if (diffDay < 7) return `${diffDay}d ago`;
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
         
         return past.toLocaleDateString();
     }
+
+    /**
+     * Get notification icon
+     */
+    getNotificationIcon(type) {
+        const icons = {
+            balance_alert: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                    <path d="M16 10h2"></path>
+                    <path d="M6 10h2"></path>
+                    <circle cx="12" cy="10" r="1"></circle>
+                </svg>
+            `,
+            bill_reminder: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+            `,
+            budget_warning: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            `,
+            transfer_complete: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M17 1l4 4-4 4"></path>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                    <path d="M7 23l-4-4 4-4"></path>
+                    <path d="M21 13v2a4 4 0 0 0 4 4H3"></path>
+                </svg>
+            `,
+            goal_progress: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            `,
+            security_alert: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+            `,
+            default: `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            `
+        };
+        
+        return icons[type] || icons.default;
+    }
+
+    // ============================================
+    // NOTIFICATION TRIGGERS
+    // ============================================
+
+    /**
+     * Check for bills due
+     */
+    async checkForBillsDue() {
+        if (!this.isNotificationTypeEnabled('bill_reminder')) return;
+        
+        try {
+            // In a real app, this would check the database for upcoming bills
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // Mock logic - in real app, check actual bills
+            const hasUpcomingBills = Math.random() > 0.7; // 30% chance
+            
+            if (hasUpcomingBills) {
+                await this.createNotification({
+                    type: 'bill_reminder',
+                    title: 'Upcoming Bill Due',
+                    message: 'You have bills due tomorrow. Check your expenses.',
+                    url: '/expenses.html',
+                    important: true
+                });
+            }
+        } catch (error) {
+            console.error('Failed to check for bills due:', error);
+        }
+    }
+
+    /**
+     * Check for budget warnings
+     */
+    async checkBudgetWarnings() {
+        if (!this.isNotificationTypeEnabled('budget_warning')) return;
+        
+        try {
+            // In a real app, this would check budget usage
+            const isOverBudget = Math.random() > 0.8; // 20% chance
+            
+            if (isOverBudget) {
+                await this.createNotification({
+                    type: 'budget_warning',
+                    title: 'Budget Warning',
+                    message: 'You\'re approaching your monthly budget limit.',
+                    url: '/budgets.html',
+                    important: true
+                });
+            }
+        } catch (error) {
+            console.error('Failed to check budget warnings:', error);
+        }
+    }
+
+    /**
+     * Check goal progress
+     */
+    async checkGoalProgress() {
+        if (!this.isNotificationTypeEnabled('goal_progress')) return;
+        
+        try {
+            // In a real app, this would check goal progress
+            const goalAchieved = Math.random() > 0.9; // 10% chance
+            
+            if (goalAchieved) {
+                await this.createNotification({
+                    type: 'goal_progress',
+                    title: 'Goal Progress',
+                    message: 'Great progress on your savings goal!',
+                    url: '/goals.html',
+                    important: false
+                });
+            }
+        } catch (error) {
+            console.error('Failed to check goal progress:', error);
+        }
+    }
+
+    /**
+     * Send balance alert
+     */
+    async sendBalanceAlert(accountId, accountName, currentBalance, threshold) {
+        if (!this.isNotificationTypeEnabled('balance_alert')) return;
+        
+        await this.createNotification({
+            type: 'balance_alert',
+            title: 'Low Balance Alert',
+            message: `${accountName} balance is low: ${this.formatCurrency(currentBalance)}`,
+            url: '/accounts.html',
+            important: true
+        });
+    }
+
+    /**
+     * Send transfer complete notification
+     */
+    async sendTransferComplete(amount, fromAccount, toAccount) {
+        if (!this.isNotificationTypeEnabled('transfer_complete')) return;
+        
+        await this.createNotification({
+            type: 'transfer_complete',
+            title: 'Transfer Complete',
+            message: `Transferred ${this.formatCurrency(amount)} from ${fromAccount} to ${toAccount}`,
+            url: '/transfer.html',
+            important: false
+        });
+    }
+
+    /**
+     * Send security alert
+     */
+    async sendSecurityAlert(message) {
+        if (!this.isNotificationTypeEnabled('security_alert')) return;
+        
+        await this.createNotification({
+            type: 'security_alert',
+            title: 'Security Alert',
+            message: message,
+            url: '/settings.html',
+            important: true
+        });
+    }
+
+    // ============================================
+    // MOCK DATA
+    // ============================================
+
+    /**
+     * Load mock notifications
+     */
+    loadMockNotifications() {
+        this.notifications = [
+            {
+                id: '1',
+                type: 'transfer_complete',
+                title: 'Transfer Complete',
+                message: 'Successfully transferred $500.00 from Checking to Savings',
+                timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+                is_read: false,
+                url: '/transfer.html',
+                important: false
+            },
+            {
+                id: '2',
+                type: 'bill_reminder',
+                title: 'Bill Due Tomorrow',
+                message: 'Electricity bill of $120.50 is due tomorrow',
+                timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+                is_read: false,
+                url: '/expenses.html',
+                important: true
+            },
+            {
+                id: '3',
+                type: 'budget_warning',
+                title: 'Budget Warning',
+                message: 'You\'ve used 85% of your Dining budget this month',
+                timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+                is_read: true,
+                url: '/budgets.html',
+                important: false
+            },
+            {
+                id: '4',
+                type: 'goal_progress',
+                title: 'Goal Progress',
+                message: 'You\'re 75% towards your vacation savings goal!',
+                timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+                is_read: true,
+                url: '/goals.html',
+                important: false
+            },
+            {
+                id: '5',
+                type: 'balance_alert',
+                title: 'Low Balance',
+                message: 'Checking account balance is below $100',
+                timestamp: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+                is_read: true,
+                url: '/accounts.html',
+                important: true
+            }
+        ];
+        
+        this.updateUnreadCount();
+    }
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
 
     /**
      * Format currency
@@ -1352,18 +1046,6 @@ class NotificationManager {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }).format(num);
-    }
-
-    /**
-     * Get account name by ID
-     */
-    getAccountName(accountId) {
-        if (window.AppState) {
-            const state = window.AppState.getState();
-            const account = state.accounts?.find(a => a.id === accountId);
-            return account ? account.name : 'Account';
-        }
-        return 'Account';
     }
 
     /**
@@ -1392,85 +1074,87 @@ class NotificationManager {
     }
 
     /**
-     * Load mock notifications for development
+     * Show error message
      */
-    loadMockNotifications() {
-        console.log('📊 Loading mock notifications for development');
-        
-        this.notifications = [
-            {
-                id: '1',
-                title: 'Welcome to WealthFlow!',
-                message: 'Start tracking your finances and get insights.',
-                type: 'system',
-                icon: 'system',
-                timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-                is_read: false,
-                priority: 'low'
-            },
-            {
-                id: '2',
-                title: 'Low Balance Alert',
-                message: 'Checking account balance is below $100',
-                type: 'balance_alert',
-                icon: 'warning',
-                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-                is_read: false,
-                priority: 'high'
-            },
-            {
-                id: '3',
-                title: 'Budget Warning',
-                message: 'Food & Dining budget is 85% used',
-                type: 'budget_warning',
-                icon: 'budget',
-                timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-                is_read: true,
-                priority: 'medium'
-            },
-            {
-                id: '4',
-                title: 'Bill Reminder',
-                message: 'Electricity bill of $120 due tomorrow',
-                type: 'bill_reminder',
-                icon: 'bill',
-                timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-                is_read: true,
-                priority: 'high'
-            },
-            {
-                id: '5',
-                title: 'Transfer Completed',
-                message: 'Successfully transferred $500 to Savings',
-                type: 'transfer_complete',
-                icon: 'transfer',
-                timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-                is_read: true,
-                priority: 'medium'
-            }
-        ];
-        
-        this.updateUnreadCount();
+    showError(message) {
+        if (window.AppState) {
+            window.AppState.addError({
+                message: message,
+                type: 'danger',
+                autoClear: true,
+                duration: 5000
+            });
+        } else {
+            alert(message);
+        }
     }
+}
+
+// ============================================
+// GLOBAL NOTIFICATION FUNCTIONS
+// ============================================
+
+/**
+ * Global function to show notification
+ */
+function showNotification(title, message, type = 'default', important = false) {
+    if (window.notificationManager) {
+        window.notificationManager.createNotification({
+            title: title,
+            message: message,
+            type: type,
+            important: important
+        });
+    } else {
+        console.warn('Notification manager not initialized');
+    }
+}
+
+/**
+ * Global function to show transfer notification
+ */
+function notifyTransferComplete(amount, fromAccount, toAccount) {
+    showNotification(
+        'Transfer Complete',
+        `Successfully transferred ${formatCurrency(amount)} from ${fromAccount} to ${toAccount}`,
+        'transfer_complete'
+    );
+}
+
+/**
+ * Global function to show low balance alert
+ */
+function notifyLowBalance(accountName, balance, threshold) {
+    showNotification(
+        'Low Balance Alert',
+        `${accountName} balance is ${formatCurrency(balance)} (below ${formatCurrency(threshold)})`,
+        'balance_alert',
+        true
+    );
 }
 
 // ============================================
 // INITIALIZE NOTIFICATION MANAGER
 // ============================================
 
-// Create and export notification manager
-window.notificationManager = new NotificationManager();
+// Create global instance
+const notificationManager = new NotificationManager();
 
 // Export for use in other modules
-window.NotificationManager = NotificationManager;
+window.notificationManager = notificationManager;
+window.showNotification = showNotification;
+window.notifyTransferComplete = notifyTransferComplete;
+window.notifyLowBalance = notifyLowBalance;
 
-console.log('🔔 Notification Manager module loaded');
-
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.notificationManager.init();
-    });
-} else {
-    window.notificationManager.init();
+// Helper function for currency formatting
+function formatCurrency(amount) {
+    const num = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(num);
 }
+
+console.log('🔔 Notification System loaded');
