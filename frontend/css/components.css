@@ -1976,3 +1976,169 @@ textarea.form-control {
         white-space: nowrap;
     }
 }
+
+
+/* Income Page Specific Styles */
+
+/* Income Content */
+.income-content {
+    padding: 1.5rem;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .summary-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Income Types Section */
+.income-types {
+    margin-bottom: 1.5rem;
+}
+
+.income-chart-container {
+    height: 300px;
+    position: relative;
+}
+
+.income-sources-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.source-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.source-item:last-child {
+    border-bottom: none;
+}
+
+.source-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+/* Income Transactions */
+.income-transactions {
+    margin-bottom: 1.5rem;
+}
+
+/* Type Badge */
+.type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.25rem;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.25rem;
+}
+
+/* Cashback Section */
+.cashback-section {
+    margin-bottom: 1.5rem;
+}
+
+.cashback-stats {
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background-color: #f9fafb;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.cashback-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.cashback-item {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.cashback-item:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+/* Tax Options */
+.tax-options {
+    animation: slideInDown 0.2s ease;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .income-content {
+        padding: 1rem;
+    }
+    
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .income-chart-container {
+        height: 250px;
+    }
+    
+    .cashback-stats .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .cashback-stats .grid {
+        grid-template-columns: 1fr;
+    }
+}
